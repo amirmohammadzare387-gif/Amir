@@ -333,38 +333,6 @@
             color: #94a3b8;
         }
 
-        /* استایل حذف عکس در ویرایشگر */
-        .cke_widget_image {
-            position: relative;
-        }
-
-        .img-delete-overlay {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #ef4444;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .cke_widget_image:hover .img-delete-overlay,
-        .cke_widget_image.active-delete .img-delete-overlay {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -503,7 +471,7 @@
                         <input type="file" id="imageUpload" accept="image/*" onchange="insertImageAtCursor(event)">
                     </label>
                     <span class="upload-msg" id="uploadMsg"></span>
-                    <span class="hint-text">💡 برای حذف عکس: انگشتت رو نگه دار روی عکس</span>
+                    <span class="hint-text">💡 برای حذف عکس: روی عکس بزن → ❌ رو بزن</span>
                 </div>
                 
                 <textarea name="editor" id="editor"></textarea>
@@ -533,7 +501,6 @@
         let currentPassword = localStorage.getItem('adminPassword');
         let posts = JSON.parse(localStorage.getItem('blogPosts')) || [];
 
-        // ==================== CKEditor ====================
         CKEDITOR.replace('editor', {
             language: 'fa',
             height: 400,
@@ -549,44 +516,36 @@
                 { name: 'tools', items: ['Maximize', 'Source'] }
             ],
             on: {
-                // بعد از آماده شدن ادیتور
                 instanceReady: function() {
                     addDeleteButtonsToImages();
                 },
-                // بعد از هر تغییر
                 change: function() {
                     addDeleteButtonsToImages();
                 }
             }
         });
 
-        // ==================== دکمه حذف برای عکس‌ها ====================
         function addDeleteButtonsToImages() {
             setTimeout(() => {
                 const editorDoc = CKEDITOR.instances.editor.document.$;
                 const images = editorDoc.querySelectorAll('img');
                 
                 images.forEach(img => {
-                    // فقط به عکس‌هایی که داخل ادیتور هستن دکمه اضافه کن
                     if (img.closest('.cke_editable') && !img.dataset.hasDeleteBtn) {
                         img.dataset.hasDeleteBtn = 'true';
                         img.style.cursor = 'pointer';
                         
-                        // کلیک روی عکس (برای موبایل: tap)
                         img.addEventListener('click', function(e) {
                             e.stopPropagation();
                             
-                            // حذف انتخاب قبلی
                             editorDoc.querySelectorAll('img.active-delete').forEach(el => {
                                 el.classList.remove('active-delete');
                                 const oldBadge = el.parentElement?.querySelector('.delete-badge');
                                 if (oldBadge) oldBadge.remove();
                             });
                             
-                            // فعال کردن این عکس
                             this.classList.add('active-delete');
                             
-                            // اضافه کردن نشانگر حذف
                             const badge = document.createElement('span');
                             badge.className = 'delete-badge';
                             badge.innerHTML = '❌';
@@ -609,20 +568,17 @@
                                 animation: popIn 0.2s ease;
                             `;
                             
-                            // اطمینان از relative بودن parent
                             if (this.parentElement) {
                                 this.parentElement.style.position = 'relative';
                                 this.parentElement.appendChild(badge);
                             }
                             
-                            // کلیک روی نشانگر ❌ = حذف عکس
                             badge.addEventListener('click', function(e2) {
                                 e2.stopPropagation();
                                 img.remove();
                                 badge.remove();
                             });
                             
-                            // کلیک بیرون = برداشتن نشانگر
                             const removeBadge = function(e3) {
                                 if (!img.contains(e3.target) && e3.target !== badge) {
                                     img.classList.remove('active-delete');
@@ -640,7 +596,6 @@
             }, 300);
         }
 
-        // ==================== قفل ====================
         function checkPassword() {
             const input = document.getElementById('passwordInput');
             const errorMsg = document.getElementById('errorMsg');
@@ -671,7 +626,6 @@
             }
         }
 
-        // ==================== تغییر رمز ====================
         function openChangePassModal() {
             document.getElementById('changePassModal').classList.add('active');
             document.getElementById('currentPassInput').value = '';
@@ -718,7 +672,6 @@
             if (e.target === this) closeChangePassModal();
         });
 
-        // ==================== آپلود عکس ====================
         function insertImageAtCursor(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -740,20 +693,16 @@
             reader.onload = function(e) {
                 const editor = CKEDITOR.instances.editor;
                 
-                // درج عکس در محل کرسر
                 const imgElement = editor.document.createElement('img');
                 imgElement.setAttribute('src', e.target.result);
                 imgElement.setAttribute('style', 'max-width:100%; border-radius:8px; margin:10px 0;');
                 editor.insertElement(imgElement);
                 
-                // پیام موفقیت
                 const msgEl = document.getElementById('uploadMsg');
                 msgEl.textContent = '✅ عکس اضافه شد';
                 setTimeout(() => { msgEl.textContent = ''; }, 2000);
                 
                 editor.focus();
-                
-                // آپدیت دکمه‌های حذف
                 addDeleteButtonsToImages();
             };
             reader.readAsDataURL(file);
@@ -761,7 +710,6 @@
             event.target.value = '';
         }
 
-        // ==================== مقالات ====================
         function publishPost() {
             const title = document.getElementById('postTitle').value.trim();
             const category = document.getElementById('postCategory').value.trim();
@@ -825,7 +773,6 @@
             editorSection.style.display = editorSection.style.display === 'none' ? 'block' : 'none';
         }
 
-        // استایل انیمیشن برای نشانگر حذف
         const style = document.createElement('style');
         style.textContent = `
             @keyframes popIn {
